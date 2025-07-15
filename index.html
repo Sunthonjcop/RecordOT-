@@ -82,14 +82,14 @@
         .ot-rate-3 { color: var(--ot-rate3-color); }
         .is-selected .ot-rate-line, .is-selected .day-number { color: white; }
 
-        /* --- Leave Indicator Styles (New Position) --- */
+        /* --- Leave Indicator Styles --- */
         .leave-indicator {
             position: absolute;
-            bottom: 5px; /* Position from the bottom */
+            bottom: 5px;
             left: 50%;
             transform: translateX(-50%);
-            width: 90%; /* Adjust width */
-            height: 18px; /* Height for horizontal bar */
+            width: 90%;
+            height: 18px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             border: 1px solid rgba(255,255,255,0.3);
@@ -107,8 +107,6 @@
         
         /* --- Input Panel Styles --- */
         .data-panel h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
-        .input-group { margin-bottom: 1.5rem; }
-        .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
         .soft-input { width: 100%; border: none; outline: none; background: var(--bg-color); border-radius: 0.75rem; padding: 0.75rem 1rem; box-shadow: inset 4px 4px 8px var(--grey-dark), inset -4px -4px 8px #ffffff; }
         .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 1rem; }
         .soft-btn { background: var(--bg-color); border-radius: 0.75rem; padding: 0.75rem; font-weight: 600; cursor: pointer; box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; transition: all 0.2s ease-in-out; text-align: center; border: 2px solid transparent; }
@@ -121,7 +119,34 @@
         .btn-primary:hover { background-color: var(--primary-color-dark); color: white; }
         .btn-danger { background-color: #f44336; color: white; }
         .btn-danger:hover { background-color: #d32f2f; color: white; }
-        
+
+        /* --- Compact UI for Inputs --- */
+        .compact-input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+        .compact-input-group label {
+            font-weight: 500;
+            opacity: 0.9;
+            flex-basis: 80px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+        .compact-input-group .soft-input { padding: 0.5rem 0.75rem; }
+        .compact-input-group .btn-group-compact { flex-grow: 1; }
+        .btn-group-compact { display: grid; gap: 0.5rem; }
+        #shiftButtons.btn-group-compact { grid-template-columns: repeat(2, 1fr); }
+        #otRateButtons.btn-group-compact, #leaveTypeButtons.btn-group-compact { grid-template-columns: repeat(3, 1fr); }
+        .btn-group-compact .soft-btn {
+            padding: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 0.6rem;
+        }
+
         /* --- Summary Panel Styles --- */
         .summary-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--grey-light); }
         .summary-list li:last-child { border-bottom: none; }
@@ -136,7 +161,25 @@
         
         /* --- Responsive --- */
         @media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; gap: 1.5rem; } .soft-panel { padding: 1.5rem; } }
-        @media (max-width: 768px) { body { padding: 0.5rem; } .main-container { gap: 1rem; } .soft-panel { padding: 1rem; border-radius: 1.5rem; } .calendar-header h2 { font-size: 1.5rem; } .calendar-grid { gap: 0.5rem; } .calendar-day { min-height: 5rem; border-radius: 0.75rem; padding-top: 0.5rem; padding-bottom: 24px; /* Make space for leave bar */ } .day-number { font-size: 1rem; } .ot-lines-container { font-size: 0.55rem; } .data-panel h3 { font-size: 1.25rem; } .grand-total .value { font-size: 2rem; } .summary-list li { flex-wrap: wrap; } }
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; }
+            .main-container { gap: 1rem; }
+            .soft-panel { padding: 1rem; border-radius: 1.5rem; }
+            .calendar-header h2 { font-size: 1.5rem; }
+            .calendar-grid { gap: 0.5rem; }
+            .calendar-day { min-height: 5rem; border-radius: 0.75rem; padding-top: 0.5rem; padding-bottom: 24px; }
+            .day-number { font-size: 1rem; }
+            .ot-lines-container { font-size: 0.55rem; }
+            .data-panel h3 { font-size: 1.25rem; }
+            .grand-total .value { font-size: 2rem; }
+            .summary-list li { flex-wrap: wrap; }
+            /* Force 2-column on mobile for input forms */
+            #input-forms .grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+            #input-forms .compact-input-group label { font-size: 0.8rem; flex-basis: auto; }
+            #input-forms .btn-group-compact .soft-btn { font-size: 0.7rem; }
+            #input-forms .btn-group { gap: 0.5rem; }
+            #input-forms .btn-group .soft-btn { font-size: 0.8rem; padding: 0.5rem;}
+        }
     </style>
 </head>
 <body>
@@ -185,50 +228,55 @@
                 <h4 id="selectedDateDisplay" class="text-lg font-semibold mb-4 text-center text-gray-500">โปรดเลือกวันในปฏิทิน</h4>
                 
                 <div id="input-forms" class="hidden">
-                    <div class="mb-6 pb-6 border-b border-[var(--grey-light)]">
-                         <label class="font-bold text-lg mb-2 block">บันทึกโอที</label>
-                        <div class="input-group">
-                            <label>เลือกกะ</label>
-                            <div id="shiftButtons" class="btn-group">
-                                <div data-shift="Day" class="soft-btn">☀️ Day</div>
-                                <div data-shift="Night" class="soft-btn">🌙 Night</div>
+                    <div class="grid">
+                        
+                        <div>
+                            <label class="font-bold text-base mb-3 block text-center md:text-left">บันทึกการลา</label>
+                            <div class="compact-input-group">
+                                <label>ประเภท</label>
+                                <div id="leaveTypeButtons" class="btn-group-compact">
+                                    <div data-leave-type="sick" class="soft-btn">ลาป่วย</div>
+                                    <div data-leave-type="annual" class="soft-btn">ลาพักร้อน</div>
+                                    <div data-leave-type="personal" class="soft-btn">ลากิจ</div>
+                                </div>
+                            </div>
+                            <div class="compact-input-group">
+                                <label for="leaveHoursInput">ชั่วโมง</label>
+                                <input type="number" id="leaveHoursInput" class="soft-input" placeholder="เช่น 8" min="0" step="0.5">
+                            </div>
+                            <div class="btn-group mt-6">
+                                <button id="addLeaveButton" class="soft-btn btn-primary">เพิ่มการลา</button>
+                                <button id="clearLeaveButton" class="soft-btn btn-danger">ลบการลา</button>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label>อัตราโอที</label>
-                            <div id="otRateButtons" class="btn-group">
-                                <div data-rate="1.5" class="soft-btn">1.5x</div>
-                                <div data-rate="2" class="soft-btn">2x</div>
-                                <div data-rate="3" class="soft-btn">3x</div>
+
+                        <div>
+                            <label class="font-bold text-base mb-3 block text-center md:text-left">บันทึกโอที</label>
+                             <div class="compact-input-group">
+                                <label>เลือกกะ</label>
+                                <div id="shiftButtons" class="btn-group-compact">
+                                    <div data-shift="Day" class="soft-btn">☀️ Day</div>
+                                    <div data-shift="Night" class="soft-btn">🌙 Night</div>
+                                </div>
+                            </div>
+                            <div class="compact-input-group">
+                                <label>อัตราโอที</label>
+                                <div id="otRateButtons" class="btn-group-compact">
+                                    <div data-rate="1.5" class="soft-btn">1.5x</div>
+                                    <div data-rate="2" class="soft-btn">2x</div>
+                                    <div data-rate="3" class="soft-btn">3x</div>
+                                </div>
+                            </div>
+                            <div class="compact-input-group">
+                                <label for="hoursInput">ชั่วโมง</label>
+                                <input type="number" id="hoursInput" class="soft-input" placeholder="0.0" min="0" step="0.5">
+                            </div>
+                            <div class="btn-group mt-6">
+                                <button id="addOtButton" class="soft-btn btn-primary">เพิ่มโอที</button>
+                                <button id="clearOtDayButton" class="soft-btn btn-danger">ลบโอที</button>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label for="hoursInput">ชั่วโมงโอที</label>
-                            <input type="number" id="hoursInput" class="soft-input" placeholder="0.0" min="0" step="0.5">
-                        </div>
-                        <div class="btn-group mt-6">
-                            <button id="addOtButton" class="soft-btn btn-primary">เพิ่มโอที</button>
-                            <button id="clearOtDayButton" class="soft-btn btn-danger">ลบโอทีของวัน</button>
-                        </div>
-                    </div>
-                    <div>
-                         <label class="font-bold text-lg mb-2 block">บันทึกการลา</label>
-                        <div class="input-group">
-                            <label>ประเภทการลา</label>
-                            <div id="leaveTypeButtons" class="btn-group grid-cols-3">
-                                <div data-leave-type="sick" class="soft-btn">ลาป่วย</div>
-                                <div data-leave-type="annual" class="soft-btn">ลาพักร้อน</div>
-                                <div data-leave-type="personal" class="soft-btn">ลากิจ</div>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label for="leaveHoursInput">จำนวนชั่วโมงลา</label>
-                            <input type="number" id="leaveHoursInput" class="soft-input" placeholder="เช่น 8" min="0" step="0.5">
-                        </div>
-                        <div class="btn-group mt-6">
-                            <button id="addLeaveButton" class="soft-btn btn-primary">เพิ่มการลา</button>
-                            <button id="clearLeaveButton" class="soft-btn btn-danger">ลบการลา</button>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -329,6 +377,9 @@
       const db = firebase.firestore();
     </script>
     <script>
+        // No changes needed in JavaScript logic for this layout update.
+        // All element IDs are the same, so the script will function correctly.
+        
         // ===== START: AUTHENTICATION LOGIC =====
         const authContainer = document.getElementById('auth-container');
         const loginForm = document.getElementById('login-form');
