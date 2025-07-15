@@ -111,31 +111,6 @@
 </head>
 <body>
 
-    <style>
-      #debug-log {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        max-height: 25vh;
-        overflow-y: scroll;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: white;
-        font-family: monospace;
-        font-size: 12px;
-        padding: 10px;
-        box-sizing: border-box;
-        z-index: 9999;
-        border-top: 2px solid #ffc107;
-      }
-      #debug-log .log-error {
-        color: #ff8a80; /* สีแดงสำหรับ error */
-      }
-      #debug-log .log-info {
-        color: #80d8ff; /* สีฟ้าสำหรับข้อมูลทั่วไป */
-      }
-    </style>
-    <div id="debug-log"></div>
     <div id="auth-container" class="w-full max-w-md mx-auto mb-8">
         <div class="soft-panel">
             <h3 class="text-center text-xl font-bold mb-4">เข้าสู่ระบบ / สมัครสมาชิก</h3>
@@ -290,28 +265,6 @@
       const db = firebase.firestore();
     </script>
     <script>
-        // ===== START: DEBUG SCRIPT =====
-        // โค้ดสำหรับแสดงผลในกล่อง debug
-        const logContainer = document.getElementById('debug-log');
-        function logToPage(message, type = 'info') {
-          const line = document.createElement('div');
-          line.classList.add(`log-${type}`);
-          line.textContent = `> ${message}`;
-          logContainer.appendChild(line);
-          // ทำให้เลื่อนลงล่างสุดอัตโนมัติ
-          logContainer.scrollTop = logContainer.scrollHeight;
-        }
-
-        // ดักจับ console.log, console.error ทั้งหมด
-        console.log = (msg) => logToPage(JSON.stringify(msg, null, 2), 'info');
-        console.error = (msg) => logToPage(JSON.stringify(msg, null, 2), 'error');
-
-        // ดักจับ Error ที่ไม่ได้คาดคิดทั้งหมดในหน้าเว็บ
-        window.onerror = function(message, source, lineno, colno, error) {
-          console.error(`[FATAL] ${message} in ${source} at line ${lineno}`);
-        };
-        // ===== END: DEBUG SCRIPT =====
-
         // ===== START: AUTHENTICATION LOGIC =====
         const authContainer = document.getElementById('auth-container');
         const loginForm = document.getElementById('login-form');
