@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกข้อมูลโอที</title>
+    <title>ระบบบันทึกข้อมูลโอทีและการลา</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom Font */
@@ -25,6 +25,10 @@
             --ot-rate1-color: #16a34a; /* green-600 */
             --ot-rate2-color: #2563eb; /* blue-600 */
             --ot-rate3-color: #9333ea; /* purple-600 */
+            /* Colors for Leave Types */
+            --leave-sick-color: #f59e0b;    /* amber-500 */
+            --leave-annual-color: #22c55e; /* green-500 */
+            --leave-personal-color: #3b82f6; /* blue-500 */
         }
 
         body {
@@ -32,7 +36,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             display: flex;
-            flex-direction: column; /* Changed for auth container */
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
@@ -60,25 +64,47 @@
         .calendar-nav-btn:active { box-shadow: inset 4px 4px 8px var(--grey-dark), inset -4px -4px 8px #ffffff; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; }
         .calendar-day-name { text-align: center; font-weight: 600; color: var(--text-color); opacity: 0.7; }
-        .calendar-day { background: var(--bg-color); border-radius: 1rem; min-height: 6rem; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; cursor: pointer; position: relative; font-weight: 600; box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; transition: all 0.2s ease-in-out; padding: 0.75rem 0.25rem; }
+        .calendar-day { background: var(--bg-color); border-radius: 1rem; min-height: 6rem; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; cursor: pointer; position: relative; font-weight: 600; box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; transition: all 0.2s ease-in-out; padding: 0.5rem 0.25rem; }
         .calendar-day:hover { transform: translateY(-2px); box-shadow: 6px 6px 12px var(--grey-dark), -6px -6px 12px #ffffff; }
         .calendar-day.is-other-month { opacity: 0.5; box-shadow: none; background: transparent; }
         .calendar-day.is-holiday { background-color: var(--holiday-bg); color: var(--holiday-text); }
-        .calendar-day.is-holiday-with-ot { box-shadow: 0 0 20px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
         .calendar-day.is-selected { background-color: var(--primary-color); color: white; box-shadow: inset 5px 5px 10px var(--primary-color-dark), inset -5px -5px 10px #8d7fff; transform: translateY(2px); }
         .has-day-shift { box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
         .has-night-shift { box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
-        .is-holiday.has-day-shift { box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), 0 0 20px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
-        .is-holiday.has-night-shift { box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), 0 0 20px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
-        .day-content-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+        .is-holiday.has-day-shift { box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), 0 0 15px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
+        .is-holiday.has-night-shift { box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), 0 0 15px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
+        .day-content-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; z-index: 1; }
         .day-number { font-size: 1.25rem; line-height: 1.2; }
-        .ot-lines-container { display: flex; flex-direction: column; align-items: center; line-height: 1; }
-        .ot-rate-line { font-size: 0.65rem; font-weight: 700; min-height: 1em; }
+        .ot-lines-container { display: flex; flex-direction: column; align-items: center; line-height: 1; font-size: 0.6rem; }
+        .ot-rate-line { font-weight: 700; min-height: 1em; }
         .ot-rate-1 { color: var(--ot-rate1-color); }
         .ot-rate-2 { color: var(--ot-rate2-color); }
         .ot-rate-3 { color: var(--ot-rate3-color); }
-        .is-selected .ot-rate-line { color: white; opacity: 0.9; }
+        .is-selected .ot-rate-line, .is-selected .day-number { color: white; }
 
+        /* --- Leave Indicator Styles (New Position) --- */
+        .leave-indicator {
+            position: absolute;
+            bottom: 5px; /* Position from the bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%; /* Adjust width */
+            height: 18px; /* Height for horizontal bar */
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            z-index: 2;
+        }
+        .leave-indicator.sick { background-color: var(--leave-sick-color); }
+        .leave-indicator.annual { background-color: var(--leave-annual-color); }
+        .leave-indicator.personal { background-color: var(--leave-personal-color); }
+        
         /* --- Input Panel Styles --- */
         .data-panel h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
         .input-group { margin-bottom: 1.5rem; }
@@ -88,25 +114,29 @@
         .soft-btn { background: var(--bg-color); border-radius: 0.75rem; padding: 0.75rem; font-weight: 600; cursor: pointer; box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; transition: all 0.2s ease-in-out; text-align: center; border: 2px solid transparent; }
         .soft-btn:hover { border-color: var(--primary-color); }
         .soft-btn.is-active { background-color: var(--primary-color); color: white; box-shadow: 0 0 15px var(--primary-color); border-color: var(--primary-color-dark); }
+        .soft-btn.is-active-sick { background-color: var(--leave-sick-color); color: white; }
+        .soft-btn.is-active-annual { background-color: var(--leave-annual-color); color: white; }
+        .soft-btn.is-active-personal { background-color: var(--leave-personal-color); color: white; }
         .btn-primary { background-color: var(--primary-color); color: white; font-size: 1.1rem; }
         .btn-primary:hover { background-color: var(--primary-color-dark); color: white; }
         .btn-danger { background-color: #f44336; color: white; }
         .btn-danger:hover { background-color: #d32f2f; color: white; }
-
+        
         /* --- Summary Panel Styles --- */
         .summary-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--grey-light); }
         .summary-list li:last-child { border-bottom: none; }
         .summary-list .label { opacity: 0.8; }
         .summary-list .value { font-weight: 700; }
+        .summary-list .leave-summary .value { font-size: 0.9rem; }
         .summary-list .ot-detail { font-size: 0.9rem; padding-left: 1rem; }
         .grand-total { margin-top: 1rem; padding: 1rem; background: var(--bg-color); border-radius: 1rem; box-shadow: inset 4px 4px 8px var(--grey-dark), inset -4px -4px 8px #ffffff; text-align: center; }
         .grand-total .label { font-size: 1rem; opacity: 0.8; }
-        .grand-total .value { font-size: 2.5rem; font-weight: 700; color: #2e7d32; }
+        .grand-total .value { font-size: 2.5rem; font-weight: 700; color: #2e7d32; transition: all 0.2s ease-in-out; }
         .blurred-text { color: transparent; text-shadow: 0 0 8px rgba(0,0,0,0.6); }
         
         /* --- Responsive --- */
         @media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; gap: 1.5rem; } .soft-panel { padding: 1.5rem; } }
-        @media (max-width: 768px) { body { padding: 0.5rem; } .main-container { gap: 1rem; } .soft-panel { padding: 1rem; border-radius: 1.5rem; } .calendar-header h2 { font-size: 1.5rem; } .calendar-grid { gap: 0.5rem; } .calendar-day { min-height: 5rem; border-radius: 0.75rem; padding: 0.5rem 0.25rem; } .day-number { font-size: 1rem; } .ot-rate-line { font-size: 0.55rem; } .data-panel h3 { font-size: 1.25rem; } .grand-total .value { font-size: 2rem; } .summary-list li { flex-wrap: wrap; } }
+        @media (max-width: 768px) { body { padding: 0.5rem; } .main-container { gap: 1rem; } .soft-panel { padding: 1rem; border-radius: 1.5rem; } .calendar-header h2 { font-size: 1.5rem; } .calendar-grid { gap: 0.5rem; } .calendar-day { min-height: 5rem; border-radius: 0.75rem; padding-top: 0.5rem; padding-bottom: 24px; /* Make space for leave bar */ } .day-number { font-size: 1rem; } .ot-lines-container { font-size: 0.55rem; } .data-panel h3 { font-size: 1.25rem; } .grand-total .value { font-size: 2rem; } .summary-list li { flex-wrap: wrap; } }
     </style>
 </head>
 <body>
@@ -149,40 +179,62 @@
             <div id="calendar" class="calendar-grid"></div>
         </div>
 
-        <div class="data-panel">
-            <div class="soft-panel mb-8">
-                <h3>บันทึกข้อมูลโอที</h3>
+        <div class="data-panel flex flex-col gap-8">
+            <div class="soft-panel">
+                <h3>ข้อมูลประจำวัน</h3>
                 <h4 id="selectedDateDisplay" class="text-lg font-semibold mb-4 text-center text-gray-500">โปรดเลือกวันในปฏิทิน</h4>
                 
-                <div id="input-section" class="hidden">
-                    <div class="input-group">
-                        <label>เลือกกะ</label>
-                        <div id="shiftButtons" class="btn-group">
-                            <div data-shift="Day" class="soft-btn">☀️ Day</div>
-                            <div data-shift="Night" class="soft-btn">🌙 Night</div>
+                <div id="input-forms" class="hidden">
+                    <div class="mb-6 pb-6 border-b border-[var(--grey-light)]">
+                         <label class="font-bold text-lg mb-2 block">บันทึกโอที</label>
+                        <div class="input-group">
+                            <label>เลือกกะ</label>
+                            <div id="shiftButtons" class="btn-group">
+                                <div data-shift="Day" class="soft-btn">☀️ Day</div>
+                                <div data-shift="Night" class="soft-btn">🌙 Night</div>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>อัตราโอที</label>
+                            <div id="otRateButtons" class="btn-group">
+                                <div data-rate="1.5" class="soft-btn">1.5x</div>
+                                <div data-rate="2" class="soft-btn">2x</div>
+                                <div data-rate="3" class="soft-btn">3x</div>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="hoursInput">ชั่วโมงโอที</label>
+                            <input type="number" id="hoursInput" class="soft-input" placeholder="0.0" min="0" step="0.5">
+                        </div>
+                        <div class="btn-group mt-6">
+                            <button id="addOtButton" class="soft-btn btn-primary">เพิ่มโอที</button>
+                            <button id="clearOtDayButton" class="soft-btn btn-danger">ลบโอทีของวัน</button>
                         </div>
                     </div>
-                    <div class="input-group">
-                        <label>อัตราโอที</label>
-                        <div id="otRateButtons" class="btn-group">
-                            <div data-rate="1.5" class="soft-btn">1.5x</div>
-                            <div data-rate="2" class="soft-btn">2x</div>
-                            <div data-rate="3" class="soft-btn">3x</div>
+                    <div>
+                         <label class="font-bold text-lg mb-2 block">บันทึกการลา</label>
+                        <div class="input-group">
+                            <label>ประเภทการลา</label>
+                            <div id="leaveTypeButtons" class="btn-group grid-cols-3">
+                                <div data-leave-type="sick" class="soft-btn">ลาป่วย</div>
+                                <div data-leave-type="annual" class="soft-btn">ลาพักร้อน</div>
+                                <div data-leave-type="personal" class="soft-btn">ลากิจ</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="hoursInput">ชั่วโมงโอที</label>
-                        <input type="number" id="hoursInput" class="soft-input" placeholder="0.0" min="0" step="0.5">
-                    </div>
-                    <div class="btn-group mt-6">
-                        <button id="addOtButton" class="soft-btn btn-primary">เพิ่มโอที</button>
-                        <button id="clearOtDayButton" class="soft-btn btn-danger">ลบของวัน</button>
+                        <div class="input-group">
+                            <label for="leaveHoursInput">จำนวนชั่วโมงลา</label>
+                            <input type="number" id="leaveHoursInput" class="soft-input" placeholder="เช่น 8" min="0" step="0.5">
+                        </div>
+                        <div class="btn-group mt-6">
+                            <button id="addLeaveButton" class="soft-btn btn-primary">เพิ่มการลา</button>
+                            <button id="clearLeaveButton" class="soft-btn btn-danger">ลบการลา</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="soft-panel">
-                <h3>สรุปข้อมูลเดือนนี้</h3>
+                <h3>สรุปข้อมูล</h3>
                 <ul class="summary-list">
                     <li>
                         <span class="label">เงินเดือน</span>
@@ -234,6 +286,18 @@
                         <span class="label font-bold">รวมชั่วโมงโอที</span>
                         <span id="summary_total_ot_hours" class="value text-lg">0.0 ชม.</span>
                     </li>
+                    <li class="leave-summary border-t-2 border-dashed border-gray-300 pt-2 mt-2">
+                        <span class="label">ลาพักร้อน (ใช้ไป/คงเหลือ)</span>
+                        <span id="summary_leave_annual" class="value text-green-600">0 / 144 ชม.</span>
+                    </li>
+                    <li class="leave-summary">
+                        <span class="label">ลาป่วย (ใช้ไป/คงเหลือ)</span>
+                        <span id="summary_leave_sick" class="value text-amber-600">0 / 240 ชม.</span>
+                    </li>
+                    <li class="leave-summary">
+                        <span class="label">ลากิจ (ใช้ไป/คงเหลือ)</span>
+                        <span id="summary_leave_personal" class="value text-blue-600">0 / 56 ชม.</span>
+                    </li>
                 </ul>
                 <div class="grand-total">
                     <div class="label">ยอดรวมทั้งหมด</div>
@@ -277,56 +341,41 @@
         const registerButton = document.getElementById('registerButton');
         const logoutButton = document.getElementById('logoutButton');
 
-        let currentUserId = null; // เก็บ ID ของผู้ใช้ที่ login อยู่
+        let currentUserId = null;
 
         registerButton.addEventListener('click', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
             auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    console.log('Registered successfully:', userCredential.user);
-                    alert('สมัครสมาชิกสำเร็จ!');
-                })
-                .catch(error => {
-                    console.error('Registration error:', error);
-                    alert('เกิดข้อผิดพลาดในการสมัคร: ' + error.message);
-                });
+                .then(userCredential => { alert('สมัครสมาชิกสำเร็จ!'); })
+                .catch(error => { alert('เกิดข้อผิดพลาดในการสมัคร: ' + error.message); });
         });
 
         loginButton.addEventListener('click', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
             auth.signInWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    console.log('Logged in successfully:', userCredential.user);
-                })
-                .catch(error => {
-                    console.error('Login error:', error);
-                    alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
-                });
+                .catch(error => { alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง'); });
         });
 
-        logoutButton.addEventListener('click', () => {
-            auth.signOut().then(() => {
-                console.log('User signed out.');
-            });
-        });
+        logoutButton.addEventListener('click', () => { auth.signOut(); });
 
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentUserId = user.uid; // เก็บ user ID
+                currentUserId = user.uid;
                 loginForm.classList.add('hidden');
                 userInfo.classList.remove('hidden');
                 userEmailDisplay.textContent = `ล็อคอินในชื่อ: ${user.email}`;
                 mainAppContainer.classList.remove('hidden');
-                init(); // เรียกใช้ init() หลังจาก login สำเร็จ
+                init();
             } else {
-                currentUserId = null; // ล้าง user ID
+                currentUserId = null;
                 loginForm.classList.remove('hidden');
                 userInfo.classList.add('hidden');
                 mainAppContainer.classList.add('hidden');
                 otData = {};
-                if (window.calendarEl) { // check if calendar is already rendered
+                isInitialized = false;
+                if (window.calendarEl) {
                     calendarEl.innerHTML = '';
                     currentMonthYearEl.textContent = '';
                 }
@@ -334,9 +383,9 @@
         });
         // ===== END: AUTHENTICATION LOGIC =====
 
-
-        // --- Global variables ---
-        let currentYear, currentMonth, selectedDate = null, otData = {}, selectedOtRate = null, selectedShift = null;
+        // --- Global variables & Constants ---
+        let currentYear, currentMonth, selectedDate = null, otData = {}, selectedOtRate = null, selectedShift = null, selectedLeaveType = null;
+        const LEAVE_QUOTAS = { annual: 144, sick: 240, personal: 56 };
 
         // --- DOM Elements ---
         const calendarEl = document.getElementById('calendar');
@@ -345,7 +394,7 @@
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
         const selectedDateDisplayEl = document.getElementById('selectedDateDisplay');
-        const inputSectionEl = document.getElementById('input-section');
+        const inputFormsEl = document.getElementById('input-forms');
         const salaryInput = document.getElementById('salaryInput');
         const shiftButtons = document.getElementById('shiftButtons');
         const otRateButtons = document.getElementById('otRateButtons');
@@ -357,6 +406,14 @@
         const toggleSalaryBtn = document.getElementById('toggleSalaryBtn');
         const eyeOpenIcon = document.getElementById('eye-open');
         const eyeClosedIcon = document.getElementById('eye-closed');
+        
+        // --- Leave DOM Elements ---
+        const leaveTypeButtons = document.getElementById('leaveTypeButtons');
+        const leaveHoursInput = document.getElementById('leaveHoursInput');
+        const addLeaveButton = document.getElementById('addLeaveButton');
+        const clearLeaveButton = document.getElementById('clearLeaveButton');
+
+        // --- Summary DOM Elements ---
         const income_regular_meal_allowance = document.getElementById('income_regular_meal_allowance');
         const income_ot_meal_allowance_base = document.getElementById('income_ot_meal_allowance_base');
         const income_ot_meal_allowance_night = document.getElementById('income_ot_meal_allowance_night');
@@ -370,6 +427,9 @@
         const income_ot_3_0 = document.getElementById('income_ot_3_0');
         const grandTotalIncome = document.getElementById('grandTotalIncome');
         const summary_total_ot_hours = document.getElementById('summary_total_ot_hours');
+        const summary_leave_annual = document.getElementById('summary_leave_annual');
+        const summary_leave_sick = document.getElementById('summary_leave_sick');
+        const summary_leave_personal = document.getElementById('summary_leave_personal');
 
         const workingDayOverrides = new Set([
             '2025-03-15', '2025-03-29', '2025-04-26', '2025-05-31', 
@@ -384,7 +444,7 @@
                     '01-01': "วันขึ้นปีใหม่", '02-12': "วันมาฆบูชา", '04-06': "วันจักรี",
                     '04-07': "ชดเชยวันจักรี", '04-13': "วันสงกรานต์", '04-14': "วันสงกรานต์",
                     '04-15': "วันสงกรานต์", '05-01': "วันแรงงาน", '05-04': "วันฉัตรมงคล",
-                    '05-05': "ชดเชยวันฉัตรมgคล", '05-12': "วันวิสาขบูชา", '06-03': "วันเฉลิมฯ พระราชินี",
+                    '05-05': "ชดเชยวันฉัตรมงคล", '05-12': "วันวิสาขบูชา", '06-03': "วันเฉลิมฯ พระราชินี",
                     '07-11': "วันอาสาฬหบูชา", '07-12': "วันเข้าพรรษา", '07-14': "ชดเชยวันเข้าพรรษา",
                     '07-28': "วันเฉลิมฯ ร.10", '07-29': "ชดเชยวันเฉลิมฯ", 
                     '08-12': "วันแม่แห่งชาติ", '10-13': "วันนวมินทรมหาราช",
@@ -399,12 +459,8 @@
             return parseFloat(value).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        // 🔴🔴🔴 START: FINAL STEP - MODIFY SAVE/LOAD FUNCTIONS 🔴🔴🔴
-        
-        // ฟังก์ชันบันทึกข้อมูลลง Firestore
         async function saveData() {
-            if (!currentUserId) return; // ตรวจสอบว่า login อยู่หรือไม่
-            console.log("Saving data to Firestore for user:", currentUserId);
+            if (!currentUserId) return;
             const dataToSave = {
                 otData: otData,
                 salary: salaryInput.value,
@@ -412,19 +468,15 @@
                 regularMealAllowance: income_regular_meal_allowance.value
             };
             try {
-                // ใช้ user ID เป็นชื่อ document เพื่อแยกข้อมูลแต่ละคน
                 await db.collection("users").doc(currentUserId).set(dataToSave);
-                // ไม่ต้อง alert ทุกครั้งที่บันทึกข้อมูลย่อย อาจจะย้ายไปไว้ที่ปุ่ม "บันทึก"
             } catch (error) {
                 console.error("Error saving data to Firestore: ", error);
                 alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
             }
         }
 
-        // ฟังก์ชันโหลดข้อมูลจาก Firestore
         async function loadData() {
-            if (!currentUserId) return; // ตรวจสอบว่า login อยู่หรือไม่
-            console.log("Loading data from Firestore for user:", currentUserId);
+            if (!currentUserId) return;
             const docRef = db.collection("users").doc(currentUserId);
             try {
                 const doc = await docRef.get();
@@ -434,24 +486,18 @@
                     salaryInput.value = parsedData.salary || '16000';
                     income_attendance_bonus.value = parsedData.attendanceBonus || '0';
                     income_regular_meal_allowance.value = parsedData.regularMealAllowance || '0';
-                    console.log("Data loaded successfully.");
                 } else {
-                    // ถ้าเป็น user ใหม่ ยังไม่มีข้อมูล
-                    console.log("No such document! Initializing fresh data.");
                     otData = {};
                 }
             } catch (error) {
                 console.error("Error loading data from Firestore: ", error);
             }
-            // อัปเดตหน้าจอหลังจากโหลดข้อมูลเสร็จ
             updateSummary();
         }
 
-        // 🔴🔴🔴 END: FINAL STEP 🔴🔴🔴
-
-        
         function updateSummary() {
-            let totalHours = { 1.5: 0, 2: 0, 3: 0 };
+            // --- OT Calculation ---
+            let totalOtHours = { 1.5: 0, 2: 0, 3: 0 };
             let nightShiftDays = 0, otMealAllowanceBase = 0, otMealAllowanceNight = 0;
             const salary = parseFloat(salaryInput.value) || 0;
             const hourlyRate = salary / 166;
@@ -461,11 +507,10 @@
                 if (year === currentYear && month - 1 === currentMonth) {
                     const dayData = otData[dateString];
                     let dailyOtHours = 0;
-
                     if (dayData.entries) {
                         dayData.entries.forEach(ot => {
                             dailyOtHours += ot.hours;
-                            if (totalHours[ot.rate] !== undefined) totalHours[ot.rate] += ot.hours;
+                            if (totalOtHours[ot.rate] !== undefined) totalOtHours[ot.rate] += ot.hours;
                         });
                     }
                     if (dayData.shift === 'Night') nightShiftDays++;
@@ -477,10 +522,10 @@
             }
 
             const nightShiftAllowance = nightShiftDays * 230;
-            const earnings1_5 = totalHours[1.5] * 1.5 * hourlyRate;
-            const earnings2_0 = totalHours[2] * 2 * hourlyRate;
-            const earnings3_0 = totalHours[3] * 3 * hourlyRate;
-            const allOtHours = totalHours[1.5] + totalHours[2] + totalHours[3];
+            const earnings1_5 = totalOtHours[1.5] * 1.5 * hourlyRate;
+            const earnings2_0 = totalOtHours[2] * 2 * hourlyRate;
+            const earnings3_0 = totalOtHours[3] * 3 * hourlyRate;
+            const allOtHours = totalOtHours[1.5] + totalOtHours[2] + totalOtHours[3];
             const allOtEarnings = earnings1_5 + earnings2_0 + earnings3_0;
             const attendanceBonus = parseFloat(income_attendance_bonus.value) || 0;
             const regularMealAllowance = parseFloat(income_regular_meal_allowance.value) || 0;
@@ -489,17 +534,32 @@
             income_ot_meal_allowance_base.textContent = formatNumber(otMealAllowanceBase);
             income_ot_meal_allowance_night.textContent = formatNumber(otMealAllowanceNight);
             income_night_shift_allowance.textContent = formatNumber(nightShiftAllowance);
-            ot_label_1_5.textContent = `โอที 1.5x (${totalHours[1.5].toFixed(1)} ชม.)`;
+            ot_label_1_5.textContent = `โอที 1.5x (${totalOtHours[1.5].toFixed(1)} ชม.)`;
             income_ot_1_5.textContent = formatNumber(earnings1_5);
-            ot_label_2_0.textContent = `โอที 2.0x (${totalHours[2].toFixed(1)} ชม.)`;
+            ot_label_2_0.textContent = `โอที 2.0x (${totalOtHours[2].toFixed(1)} ชม.)`;
             income_ot_2_0.textContent = formatNumber(earnings2_0);
-            ot_label_3_0.textContent = `โอที 3.0x (${totalHours[3].toFixed(1)} ชม.)`;
+            ot_label_3_0.textContent = `โอที 3.0x (${totalOtHours[3].toFixed(1)} ชม.)`;
             income_ot_3_0.textContent = formatNumber(earnings3_0);
             summary_total_ot_hours.textContent = `${allOtHours.toFixed(1)} ชม.`;
             grandTotalIncome.textContent = formatNumber(grandTotal);
 
+            // --- Leave Calculation ---
+            const totalLeaveHours = { annual: 0, sick: 0, personal: 0 };
+            for (const dateString in otData) {
+                const dayData = otData[dateString];
+                if (dayData && dayData.leave) {
+                    if (totalLeaveHours[dayData.leave.type] !== undefined) {
+                        totalLeaveHours[dayData.leave.type] += dayData.leave.hours;
+                    }
+                }
+            }
+            
+            summary_leave_annual.textContent = `${totalLeaveHours.annual} / ${LEAVE_QUOTAS.annual - totalLeaveHours.annual} ชม.`;
+            summary_leave_sick.textContent = `${totalLeaveHours.sick} / ${LEAVE_QUOTAS.sick - totalLeaveHours.sick} ชม.`;
+            summary_leave_personal.textContent = `${totalLeaveHours.personal} / ${LEAVE_QUOTAS.personal - totalLeaveHours.personal} ชม.`;
+
             renderCalendar();
-            saveData(); // บันทึกข้อมูลลง Firestore ทุกครั้งที่มีการเปลี่ยนแปลง
+            saveData();
         }
         
         function renderCalendar() {
@@ -507,13 +567,11 @@
             calendarEl.innerHTML = '';
             const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
             const holidays = getThaiHolidays(currentYear);
-
             currentMonthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear + 543}`;
-            
             const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-            calendarDayNamesEl.innerHTML = ''; // Clear old day names
+            calendarDayNamesEl.innerHTML = '';
             const dayNames = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
             dayNames.forEach(day => {
                 const dayNameEl = document.createElement('div');
@@ -522,74 +580,49 @@
                 calendarDayNamesEl.appendChild(dayNameEl);
             });
 
-
-            for (let i = 0; i < firstDayOfMonth; i++) {
-                const emptyEl = document.createElement('div');
-                emptyEl.classList.add('calendar-day', 'is-other-month');
-                calendarEl.appendChild(emptyEl);
-            }
+            for (let i = 0; i < firstDayOfMonth; i++) calendarEl.appendChild(document.createElement('div')).classList.add('calendar-day', 'is-other-month');
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayEl = document.createElement('div');
-                dayEl.classList.add('calendar-day');
+                dayEl.className = 'calendar-day';
                 dayEl.dataset.date = dateString;
                 
-                const contentWrapper = document.createElement('div');
-                contentWrapper.className = 'day-content-wrapper';
-                dayEl.appendChild(contentWrapper);
-
                 const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
-                const monthDayString = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
+                const monthDayString = dateString.substring(5);
                 const dayData = otData[dateString];
-                const hasOtData = dayData && ((dayData.entries && dayData.entries.length > 0) || dayData.shift);
+                const hasOt = dayData?.entries?.length > 0;
                 const isHoliday = (dayOfWeek === 0 || dayOfWeek === 6 || holidays[monthDayString]);
                 const isWorkingOverride = workingDayOverrides.has(dateString);
                 const isTrueHoliday = isHoliday && !isWorkingOverride;
 
                 let otLinesHtml = '';
-                if (hasOtData) {
+                if (hasOt) {
                     const hoursByRate = { '1.5': 0, '2': 0, '3': 0 };
-                    if (dayData.entries) {
-                        dayData.entries.forEach(entry => {
-                            if (hoursByRate[entry.rate] !== undefined) {
-                                hoursByRate[entry.rate] += entry.hours;
-                            }
-                        });
-                    }
-                    
-                    const rates = ['1.5', '2', '3'];
-                    const colors = ['ot-rate-1', 'ot-rate-2', 'ot-rate-3'];
-                    let lines = '';
-                    rates.forEach((rate, index) => {
-                        let hoursText = '&nbsp;';
-                        if (hoursByRate[rate] > 0) {
-                            hoursText = hoursByRate[rate].toFixed(1).replace('.0', '');
-                        }
-                        lines += `<div class="ot-rate-line ${colors[index]}">${hoursText}</div>`;
-                    });
-                    otLinesHtml = `<div class="ot-lines-container">${lines}</div>`;
+                    dayData.entries.forEach(entry => hoursByRate[entry.rate] += entry.hours);
+                    otLinesHtml = `<div class="ot-lines-container">
+                        <div class="ot-rate-line ot-rate-1">${hoursByRate['1.5'] > 0 ? hoursByRate['1.5'].toFixed(1).replace('.0','') : '&nbsp;'}</div>
+                        <div class="ot-rate-line ot-rate-2">${hoursByRate['2'] > 0 ? hoursByRate['2'].toFixed(1).replace('.0','') : '&nbsp;'}</div>
+                        <div class="ot-rate-line ot-rate-3">${hoursByRate['3'] > 0 ? hoursByRate['3'].toFixed(1).replace('.0','') : '&nbsp;'}</div>
+                    </div>`;
                 }
                 
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'day-content-wrapper';
                 contentWrapper.innerHTML = `<div class="day-number">${day}</div>${otLinesHtml}`;
+                dayEl.appendChild(contentWrapper);
 
-                if (isTrueHoliday) {
-                    dayEl.classList.add('is-holiday');
-                    dayEl.title = holidays[monthDayString] || 'วันหยุดสุดสัปดาห์';
-                    if(hasOtData) {
-                        dayEl.classList.add('is-holiday-with-ot');
-                    }
-                }
-                
-                if (hasOtData) {
-                    if (dayData.shift === 'Day') dayEl.classList.add('has-day-shift');
-                    if (dayData.shift === 'Night') dayEl.classList.add('has-night-shift');
+                if (dayData?.leave) {
+                    const leaveIndicator = document.createElement('div');
+                    leaveIndicator.className = `leave-indicator ${dayData.leave.type}`;
+                    leaveIndicator.textContent = `${dayData.leave.hours.toString().replace('.0', '')} ชม.`;
+                    dayEl.appendChild(leaveIndicator);
                 }
 
-                if (dateString === selectedDate) {
-                    dayEl.classList.add('is-selected');
-                }
+                if (dateString === selectedDate) dayEl.classList.add('is-selected');
+                if (isTrueHoliday) dayEl.classList.add('is-holiday');
+                if (dayData?.shift === 'Day') dayEl.classList.add('has-day-shift');
+                if (dayData?.shift === 'Night') dayEl.classList.add('has-night-shift');
                 
                 dayEl.addEventListener('click', () => selectDate(dateString));
                 calendarEl.appendChild(dayEl);
@@ -599,25 +632,29 @@
         function selectDate(dateString) {
             selectedDate = dateString;
             const holidays = getThaiHolidays(currentYear);
-            const monthDayString = dateString.substring(5);
-            const holidayName = holidays[monthDayString];
-
+            const holidayName = holidays[dateString.substring(5)];
             const [y, m, d] = dateString.split('-');
-            let displayText = `วันที่ ${parseInt(d)} ${currentMonthYearEl.textContent}`;
-            if (holidayName) {
-                displayText += ` - ${holidayName}`;
-            }
-            selectedDateDisplayEl.textContent = displayText;
-            inputSectionEl.classList.remove('hidden');
+            selectedDateDisplayEl.textContent = `วันที่ ${parseInt(d)} ${currentMonthYearEl.textContent}${holidayName ? ` - ${holidayName}` : ''}`;
+            inputFormsEl.classList.remove('hidden');
 
             document.querySelectorAll('#shiftButtons .soft-btn, #otRateButtons .soft-btn').forEach(b => b.classList.remove('is-active'));
             hoursInput.value = '';
+            selectedOtRate = null;
+
+            document.querySelectorAll('#leaveTypeButtons .soft-btn').forEach(b => b.classList.remove('is-active', 'is-active-sick', 'is-active-annual', 'is-active-personal'));
+            leaveHoursInput.value = '';
+            selectedLeaveType = null;
             
             const dayData = otData[selectedDate];
             if (dayData) {
                 selectedShift = dayData.shift;
-                if (selectedShift) {
-                    document.querySelector(`#shiftButtons .soft-btn[data-shift="${selectedShift}"]`)?.classList.add('is-active');
+                if (selectedShift) document.querySelector(`#shiftButtons .soft-btn[data-shift="${selectedShift}"]`)?.classList.add('is-active');
+                if (dayData.leave) {
+                    const { type, hours } = dayData.leave;
+                    selectedLeaveType = type;
+                    leaveHoursInput.value = hours;
+                    const activeBtn = document.querySelector(`#leaveTypeButtons .soft-btn[data-leave-type="${type}"]`);
+                    if(activeBtn) activeBtn.classList.add('is-active', `is-active-${type}`);
                 }
             } else {
                 selectedShift = null;
@@ -630,14 +667,12 @@
             if (!btn || !selectedDate) return;
             const shift = btn.dataset.shift;
             if (btn.classList.contains('is-active')) {
-                btn.classList.remove('is-active');
-                selectedShift = null;
+                btn.classList.remove('is-active'); selectedShift = null;
             } else {
                 document.querySelectorAll('#shiftButtons .soft-btn').forEach(b => b.classList.remove('is-active'));
-                btn.classList.add('is-active');
-                selectedShift = shift;
+                btn.classList.add('is-active'); selectedShift = shift;
             }
-            if (!otData[selectedDate]) otData[selectedDate] = { entries: [], shift: null };
+            if (!otData[selectedDate]) otData[selectedDate] = {};
             otData[selectedDate].shift = selectedShift;
             updateSummary();
         }
@@ -645,16 +680,33 @@
         function handleRateSelection(e) {
             const btn = e.target.closest('.soft-btn');
             if (!btn) return;
-            document.querySelectorAll('#otRateButtons .soft-btn').forEach(b => b.classList.remove('is-active'));
-            btn.classList.add('is-active');
-            selectedOtRate = parseFloat(btn.dataset.rate);
+            if(btn.classList.contains('is-active')) {
+                btn.classList.remove('is-active'); selectedOtRate = null;
+            } else {
+                document.querySelectorAll('#otRateButtons .soft-btn').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active'); selectedOtRate = parseFloat(btn.dataset.rate);
+            }
+        }
+
+        function handleLeaveTypeSelection(e) {
+            const btn = e.target.closest('.soft-btn');
+            if (!btn) return;
+            const type = btn.dataset.leaveType;
+            if (btn.classList.contains('is-active')) {
+                btn.classList.remove('is-active', `is-active-${type}`);
+                selectedLeaveType = null;
+            } else {
+                document.querySelectorAll('#leaveTypeButtons .soft-btn').forEach(b => b.classList.remove('is-active', 'is-active-sick', 'is-active-annual', 'is-active-personal'));
+                btn.classList.add('is-active', `is-active-${type}`);
+                selectedLeaveType = type;
+            }
         }
 
         function addOtEntry() {
             if (!selectedDate || selectedOtRate === null) { alert('โปรดเลือกวันและอัตราโอที'); return; }
             const hours = parseFloat(hoursInput.value);
             if (isNaN(hours) || hours <= 0) { alert('โปรดใส่ชั่วโมงที่ถูกต้อง'); return; }
-            if (!otData[selectedDate]) otData[selectedDate] = { entries: [], shift: selectedShift };
+            if (!otData[selectedDate]) otData[selectedDate] = {};
             if (!otData[selectedDate].entries) otData[selectedDate].entries = [];
             otData[selectedDate].entries.push({ hours, rate: selectedOtRate });
             hoursInput.value = '';
@@ -663,15 +715,31 @@
             updateSummary();
         }
         
+        function addLeaveEntry() {
+            if (!selectedDate || !selectedLeaveType) { alert('โปรดเลือกวันและประเภทการลา'); return; }
+            const hours = parseFloat(leaveHoursInput.value);
+            if (isNaN(hours) || hours <= 0) { alert('โปรดใส่จำนวนชั่วโมงลาที่ถูกต้อง'); return; }
+            if (!otData[selectedDate]) otData[selectedDate] = {};
+            otData[selectedDate].leave = { type: selectedLeaveType, hours: hours };
+            updateSummary();
+            alert('บันทึกข้อมูลการลาเรียบร้อย');
+        }
+
         function clearOtForDay() {
             if (!selectedDate) { alert('โปรดเลือกวันที่จะลบ'); return; }
             if (confirm(`ต้องการลบข้อมูล OT ทั้งหมดของวันที่ ${selectedDateDisplayEl.textContent} หรือไม่?`)) {
-                if (otData[selectedDate]) {
-                    otData[selectedDate].entries = [];
-                    if (!otData[selectedDate].shift) {
-                       delete otData[selectedDate];
-                    }
-                }
+                if (otData[selectedDate]) otData[selectedDate].entries = [];
+                updateSummary();
+            }
+        }
+
+        function clearLeaveForDay() {
+            if (!selectedDate) { alert('โปรดเลือกวันที่จะลบข้อมูลลา'); return; }
+            if (otData[selectedDate]?.leave && confirm(`ต้องการลบข้อมูลการลาของวันที่ ${selectedDateDisplayEl.textContent} หรือไม่?`)) {
+                delete otData[selectedDate].leave;
+                leaveHoursInput.value = '';
+                document.querySelectorAll('#leaveTypeButtons .soft-btn').forEach(b => b.classList.remove('is-active', 'is-active-sick', 'is-active-annual', 'is-active-personal'));
+                selectedLeaveType = null;
                 updateSummary();
             }
         }
@@ -691,42 +759,50 @@
         // --- Initial Load ---
         let isInitialized = false;
         async function init() {
-            if(isInitialized) return; // ป้องกันการเรียกซ้ำ
+            if(isInitialized) return;
             isInitialized = true;
-
             const today = new Date();
             currentYear = today.getFullYear();
             currentMonth = today.getMonth();
             
-            await loadData(); // โหลดข้อมูลจาก Firestore
+            // Set initial blur state
+            salaryInput.classList.add('blurred-text');
+            grandTotalIncome.classList.add('blurred-text');
+            eyeOpenIcon.classList.add('hidden');
+            eyeClosedIcon.classList.remove('hidden');
 
+            await loadData();
+            
             // Event Listeners
-            prevMonthBtn.addEventListener('click', () => {
-                currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            const navFunction = (isNext) => {
+                if(isNext) { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }}
+                else { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }}
                 selectedDate = null;
-                inputSectionEl.classList.add('hidden');
+                inputFormsEl.classList.add('hidden');
                 selectedDateDisplayEl.textContent = 'โปรดเลือกวันในปฏิทิน';
                 updateSummary();
-            });
-            nextMonthBtn.addEventListener('click', () => {
-                currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-                selectedDate = null;
-                inputSectionEl.classList.add('hidden');
-                selectedDateDisplayEl.textContent = 'โปรดเลือกวันในปฏิทิน';
-                updateSummary();
-            });
+            };
+            prevMonthBtn.addEventListener('click', () => navFunction(false));
+            nextMonthBtn.addEventListener('click', () => navFunction(true));
+
             shiftButtons.addEventListener('click', handleShiftSelection);
             otRateButtons.addEventListener('click', handleRateSelection);
+            leaveTypeButtons.addEventListener('click', handleLeaveTypeSelection);
             addOtButton.addEventListener('click', addOtEntry);
+            addLeaveButton.addEventListener('click', addLeaveEntry);
             clearOtDayButton.addEventListener('click', clearOtForDay);
+            clearLeaveButton.addEventListener('click', clearLeaveForDay);
+
             saveDataButton.addEventListener('click', () => {
-                saveData(); // เรียกใช้ฟังก์ชัน saveData ที่แก้เป็น Firestore แล้ว
+                saveData();
                 alert('บันทึกข้อมูลลงฐานข้อมูลออนไลน์เรียบร้อยแล้ว!');
             });
             clearMonthDataButton.addEventListener('click', clearMonthData);
+
             [salaryInput, income_attendance_bonus, income_regular_meal_allowance].forEach(input => {
                 input.addEventListener('input', updateSummary);
             });
+
             toggleSalaryBtn.addEventListener('click', () => {
                 salaryInput.classList.toggle('blurred-text');
                 grandTotalIncome.classList.toggle('blurred-text');
@@ -734,7 +810,6 @@
                 eyeClosedIcon.classList.toggle('hidden');
             });
         }
-        
     </script>
 </body>
 </html>
