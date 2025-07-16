@@ -413,28 +413,30 @@
       const db = firebase.firestore();
     </script>
     <script>
-        // DOM Elements
         const authContainer = document.getElementById('auth-container');
         const appHeader = document.getElementById('app-header');
         const userProfileEmail = document.getElementById('user-profile-email');
         const userProfileLogout = document.getElementById('user-profile-logout');
         const mainAppContainer = document.querySelector('.main-container');
+        
         const loginForm = document.getElementById('login-form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const loginButton = document.getElementById('loginButton');
+        
         const registerForm = document.getElementById('register-form');
         const registerEmailInput = document.getElementById('register_email');
         const registerPasswordInput = document.getElementById('register_password');
         const registerButton = document.getElementById('registerButton');
+        
         const switchToRegisterBtn = document.getElementById('switchToRegister');
         const switchToLoginBtn = document.getElementById('switchToLogin');
         const authTitle = document.getElementById('auth-title');
         const authPrompt = document.getElementById('auth-prompt');
         const registerPrompt = document.getElementById('register-prompt');
+
         let currentUserId = null;
 
-        // Auth Logic
         switchToRegisterBtn.addEventListener('click', () => {
             loginForm.classList.add('hidden');
             authPrompt.classList.add('hidden');
@@ -473,7 +475,6 @@
             }
         });
 
-        // App Logic
         let currentYear, currentMonth, selectedDate = null, otData = {}, selectedOtRate = null, selectedShift = null, selectedLeaveType = null;
         const LEAVE_QUOTAS = { annual: 144, sick: 240, personal: 56 };
         
