@@ -19,6 +19,7 @@
             --text-color: #3b4256;
             --holiday-bg: #ffebee;
             --holiday-text: #c62828;
+            --holiday-shadow: rgba(229, 57, 53, 0.5);
             --day-shift-glow: #f59e0b;
             --night-shift-glow: #14b8a6;
             --ot-rate1-color: #16a34a;
@@ -96,7 +97,7 @@
             height: 16px;
         }
 
-        /* --- Calendar Styles --- */
+        /* --- Calendar Styles (Restored to working version) --- */
         .calendar-header h2 { font-size: 1.75rem; font-weight: 700; color: var(--primary-color); }
         .calendar-nav-btn { background: var(--bg-color); border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; transition: all 0.2s ease-in-out; }
         .calendar-nav-btn:hover { color: var(--primary-color); }
@@ -117,18 +118,20 @@
             transition: all 0.2s ease-in-out;
             padding: 0;
             overflow: hidden;
-            border: 2px solid transparent;
         }
         .calendar-day:hover { transform: translateY(-2px); box-shadow: 6px 6px 12px var(--grey-dark), -6px -6px 12px #ffffff; }
         .calendar-day.is-other-month { opacity: 0.5; box-shadow: none; background: transparent; }
         .calendar-day.is-holiday { background-color: var(--holiday-bg); color: var(--holiday-text); }
         .day-number { font-size: 1.25rem; line-height: 1.2; }
         
-        .has-day-shift { border-color: var(--day-shift-glow); box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff, 4px 2px 5px rgba(0,0,0,0.1), inset 4px 0 8px -2px var(--day-shift-glow); }
-        .has-night-shift { border-color: var(--night-shift-glow); box-shadow: 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff, 4px 2px 5px rgba(0,0,0,0.1), inset 4px 0 8px -2px var(--night-shift-glow); }
+        /* --- CORRECT Box-Shadow Styles --- */
+        .has-day-shift { box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
+        .has-night-shift { box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
+        .is-holiday.has-day-shift { box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), 0 0 15px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
+        .is-holiday.has-night-shift { box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), 0 0 15px var(--holiday-shadow), 4px 4px 8px var(--grey-dark), -4px -4px 8px #ffffff; }
         .calendar-day.is-selected { background-color: var(--primary-color); color: white; box-shadow: inset 5px 5px 10px var(--primary-color-dark), inset -5px -5px 10px #8d7fff; transform: translateY(2px); }
-        .is-selected.has-day-shift { border-color: var(--day-shift-glow); box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), inset 5px 5px 10px var(--primary-color-dark), inset -5px -5px 10px #8d7fff; }
-        .is-selected.has-night-shift { border-color: var(--night-shift-glow);  box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), inset 5px 5px 10px var(--primary-color-dark), inset -5px -5px 10px #8d7fff; }
+        .is-selected.has-day-shift { box-shadow: inset 4px 0 8px -2px var(--day-shift-glow), inset 5px 5px 10px var(--primary-color-dark), inset -5px -5px 10px #8d7fff; }
+        .is-selected.has-night-shift { box-shadow: inset 4px 0 8px -2px var(--night-shift-glow), inset 5px 5px 10px var(--primary-color-dark), inset -5px -5px 10px #8d7fff; }
 
         .day-content-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; z-index: 1; padding-bottom: 22px; }
         .ot-lines-container { display: flex; flex-direction: column; align-items: center; line-height: 1; font-size: 0.6rem; }
@@ -418,23 +421,19 @@
         const userProfileEmail = document.getElementById('user-profile-email');
         const userProfileLogout = document.getElementById('user-profile-logout');
         const mainAppContainer = document.querySelector('.main-container');
-        
         const loginForm = document.getElementById('login-form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const loginButton = document.getElementById('loginButton');
-        
         const registerForm = document.getElementById('register-form');
         const registerEmailInput = document.getElementById('register_email');
         const registerPasswordInput = document.getElementById('register_password');
         const registerButton = document.getElementById('registerButton');
-        
         const switchToRegisterBtn = document.getElementById('switchToRegister');
         const switchToLoginBtn = document.getElementById('switchToLogin');
         const authTitle = document.getElementById('auth-title');
         const authPrompt = document.getElementById('auth-prompt');
         const registerPrompt = document.getElementById('register-prompt');
-
         let currentUserId = null;
 
         switchToRegisterBtn.addEventListener('click', () => {
@@ -533,7 +532,7 @@
         function clearLeaveForDay() { if (!selectedDate) return; if (otData[selectedDate]?.leave && confirm(`ต้องการลบข้อมูลการลาของวันที่ ${selectedDateDisplayEl.textContent} หรือไม่?`)) { delete otData[selectedDate].leave; leaveHoursInput.value = ''; document.querySelector('#leaveTypeButtons .is-active')?.classList.remove('is-active', 'is-active-sick', 'is-active-annual', 'is-active-personal'); selectedLeaveType = null; updateSummary(); } }
         function clearMonthData() { if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมดของเดือน ${currentMonthYearEl.textContent}?`)) { const monthToClear = String(currentMonth + 1).padStart(2, '0'); Object.keys(otData).forEach(dateString => { if (dateString.startsWith(`${currentYear}-${monthToClear}`)) { delete otData[dateString]; } }); updateSummary(); } }
         let isInitialized = false;
-        async function init() { if(isInitialized) return; isInitialized = true; const today = new Date(); currentYear = today.getFullYear(); currentMonth = today.getMonth(); salaryInput.classList.add('blurred-text'); grandTotalIncome.classList.add('blurred-text'); eyeOpenIcon.classList.add('hidden'); eyeClosedIcon.classList.remove('hidden'); await loadData(); const navFunction = (isNext) => { if(isNext) { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }} else { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }} selectedDate = null; inputFormsEl.classList.add('hidden'); selectedDateDisplayEl.textContent = 'โปรดเลือกวันในปฏิทิน'; updateSummary(); }; prevMonthBtn.addEventListener('click', () => navFunction(false)); nextMonthBtn.addEventListener('click', () => navFunction(true)); shiftButtons.addEventListener('click', handleShiftSelection); otRateButtons.addEventListener('click', handleRateSelection); leaveTypeButtons.addEventListener('click', handleLeaveTypeSelection); addOtButton.addEventListener('click', addOtEntry); addLeaveButton.addEventListener('click', addLeaveEntry); clearOtDayButton.addEventListener('click', clearOtForDay); clearLeaveButton.addEventListener('click', clearLeaveForDay); saveDataButton.addEventListener('click', () => { saveData(); alert('บันทึกข้อมูลลงฐานข้อมูลออนไลน์เรียบร้อยแล้ว!'); }); clearMonthDataButton.addEventListener('click', clearMonthData); [salaryInput, income_attendance_bonus, income_regular_meal_allowance].forEach(input => { input.addEventListener('input', updateSummary); }); toggleSalaryBtn.addEventListener('click', () => { salaryInput.classList.toggle('blurred-text'); grandTotalIncome.classList.toggle('blurred-text'); eyeOpenIcon.classList.toggle('hidden'); eyeClosedIcon.classList.toggle('hidden'); }); }
+        async function init() { if(isInitialized) return; isInitialized = true; const today = new Date(); currentYear = today.getFullYear(); currentMonth = today.getMonth(); salaryInput.classList.add('blurred-text'); grandTotalIncome.classList.add('blurred-text'); eyeOpenIcon.classList.add('hidden'); eyeClosedIcon.classList.remove('hidden'); await loadData(); const navFunction = (isNext) => { if(isNext) { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }} else { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }} selectedDate = null; inputFormsEl.classList.add('hidden'); selectedDateDisplayEl.textContent = 'โปรดเลือกวันในปฏิทิน'; updateSummary(); }; prevMonthBtn.addEventListener('click', () => navFunction(false)); nextMonthBtn.addEventListener('click', () => navFunction(true)); shiftButtons.addEventListener('click', handleShiftSelection); otRateButtons.addEventListener('click', handleRateSelection); leaveTypeButtons.addEventListener('click', handleLeaveTypeSelection); addOtButton.addEventListener('click', addOtEntry); addLeaveButton.addEventListener('click', addLeaveEntry); clearOtDayButton.addEventListener('click', clearOtForDay); clearLeaveButton.addEventListener('click', clearLeaveForDay); saveDataButton.addEventListener('click', () => { saveData(); alert('บันทึกข้อมูลลงฐานข้อมูลออนไลน์เรียบร้อยแล้ว!'); }); clearMonthDataButton.addEventListener('click', clearMonthData); [salaryInput, income_attendance_bonus, income_regular_meal_allowance].forEach(input => { input.addEventListener('input', updateSummary); }); toggleSalaryBtn.addEventListener('click', () => { const isBlurred = salaryInput.classList.contains('blurred-text'); if(isBlurred) { salaryInput.classList.remove('blurred-text'); grandTotalIncome.classList.remove('blurred-text'); eyeOpenIcon.classList.remove('hidden'); eyeClosedIcon.classList.add('hidden'); } else { salaryInput.classList.add('blurred-text'); grandTotalIncome.classList.add('blurred-text'); eyeOpenIcon.classList.add('hidden'); eyeClosedIcon.classList.remove('hidden'); } }); }
     </script>
 </body>
 </html>
