@@ -547,7 +547,8 @@
                     } 
                 } 
             } 
-            const nightShiftAllowance = nightShiftDays * 230; 
+            // ปรับแก้ค่ากะกลางคืนจาก 230 เป็น 250
+            const nightShiftAllowance = nightShiftDays * 250; 
             const earnings1_5 = totalOtHours[1.5] * 1.5 * hourlyRate; 
             const earnings2_0 = totalOtHours[2] * 2 * hourlyRate; 
             const earnings3_0 = totalOtHours[3] * 3 * hourlyRate; 
@@ -846,3 +847,5 @@
     </script>
 </body>
 </html>
+
+```
